@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Bot - Random Images & Captions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .content-box {
+            margin: 30px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #caption {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .image-container {
+            position: relative;
+            margin: 30px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+        }
+
+        #image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        #image:hover {
+            transform: scale(1.02);
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        #nextBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #downloadBtn {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 20px;
+            background: #ffe6e6;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Random Image Bot 🎨</h1>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="content-box">
+            <div id="caption">Click "Next" to get a random image and caption!</div>
+            
+            <div class="image-container">
+                <div class="loading" id="loading">Loading image...</div>
+                <img id="image" alt="Random image will appear here" style="display: none;">
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button id="nextBtn">
+                <span>🔄 Next Image</span>
+            </button>
+            <button id="downloadBtn">
+                <span>⬇️ Download Image</span>
+            </button>
+        </div>
+        
+        <div class="info">
+            <p>Each click shows a random image from Google Drive with a random caption</p>
+        </div>
+    </div>
+
+    <script>
+        let currentImageData = null;
+
+        async function fetchRandomContent() {
+            try {
+                // Show loading
+                showLoading(true);
+                hideError();
+
+                const response = await fetch('/api/random-content');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch content');
+                }
+
+                // Update caption
+                document.getElementById('caption').textContent = data.caption;
+
+                // Update image
+                const imgElement = document.getElementById('image');
+                imgElement.src = data.image.previewLink;
+                imgElement.style.display = 'block';
+                
+                // Store current image data for download
+                currentImageData = data.image;
+
+                showLoading(false);
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to load content. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            if (show) {
+                document.getElementById('image').style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function downloadImage() {
+            if (!currentImageData) {
+                showError('No image to download. Please get an image first.');
+                return;
+            }
+
+            // Create a temporary link to trigger download
+            const link = document.createElement('a');
+            link.href = currentImageData.downloadLink;
+            link.download = currentImageData.name || 'image.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners
+        document.getElementById('nextBtn').addEventListener('click', fetchRandomContent);
+        document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+
+        // Load initial content
+        fetchRandomContent();
+    </script>
+</body>
+</html>
