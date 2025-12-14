@@ -1,173 +1,69 @@
-class ImageGenerator {
-    constructor() {
-        this.currentFolder = 'Lilia';
-        this.captions = [];
-        this.maxImages = 50; // Maximum number to check
-        
-        this.init();
-    }
-    
-    async init() {
-        await this.loadCaptions();
-        this.setupEventListeners();
-        this.updateFolderButtons();
-    }
-    
-    async loadCaptions() {
-        try {
-            const response = await fetch('captions.txt');
-            if (!response.ok) throw new Error('Failed to load captions');
-            
-            const text = await response.text();
-            this.captions = text.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-            
-            console.log(`Loaded ${this.captions.length} captions`);
-        } catch (error) {
-            console.error('Error loading captions:', error);
-            this.captions = ['A beautiful moment captured.', 'Memories to cherish forever.'];
-        }
-    }
-    
-    setupEventListeners() {
-        document.querySelectorAll('.folder-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const folder = e.target.dataset.folder;
-                this.selectFolder(folder);
-            });
-        });
-        
-        document.getElementById('generate-btn').addEventListener('click', () => {
-            this.generateRandomImage();
-        });
-    }
-    
-    selectFolder(folder) {
-        this.currentFolder = folder === 'random' 
-            ? ['Lilia', 'Leylah'][Math.floor(Math.random() * 2)]
-            : folder;
-        
-        this.updateFolderButtons();
-    }
-    
-    updateFolderButtons() {
-        document.querySelectorAll('.folder-btn').forEach(btn => {
-            const folder = btn.dataset.folder;
-            if (folder === 'random') {
-                btn.classList.toggle('active', this.currentFolder === 'random');
-            } else {
-                btn.classList.toggle('active', folder === this.currentFolder);
-            }
-        });
-    }
-    
-    async getRandomImageNumber(folder) {
-        // Try to find how many images exist by checking sequentially
-        const validNumbers = [];
-        
-        // Check common extensions
-        const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-        
-        // Check first 50 numbers (adjust as needed)
-        for (let i = 1; i <= this.maxImages; i++) {
-            for (const ext of extensions) {
-                const imageUrl = `${folder}/${i}${ext}`;
-                if (await this.imageExists(imageUrl)) {
-                    validNumbers.push(i);
-                    break; // Found this number with one extension
-                }
-            }
-        }
-        
-        if (validNumbers.length === 0) return null;
-        return validNumbers[Math.floor(Math.random() * validNumbers.length)];
-    }
-    
-    async imageExists(url) {
-        try {
-            const response = await fetch(url, { method: 'HEAD' });
-            return response.ok;
-        } catch {
-            return false;
-        }
-    }
-    
-    async generateRandomImage() {
-        try {
-            const folder = this.currentFolder;
-            const imageNumber = await this.getRandomImageNumber(folder);
-            
-            if (!imageNumber) {
-                throw new Error(`No images found in ${folder} folder. Please ensure images are named 1.jpg, 2.jpg, etc.`);
-            }
-            
-            // Try different extensions
-            const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-            let imageUrl = '';
-            
-            for (const ext of extensions) {
-                const testUrl = `${folder}/${imageNumber}${ext}`;
-                if (await this.imageExists(testUrl)) {
-                    imageUrl = testUrl;
-                    break;
-                }
-            }
-            
-            if (!imageUrl) {
-                throw new Error(`Image ${imageNumber} not found in ${folder} folder`);
-            }
-            
-            // Select random caption
-            const randomCaption = this.captions.length > 0
-                ? this.captions[Math.floor(Math.random() * this.captions.length)]
-                : 'A beautiful moment captured.';
-            
-            // Update UI
-            this.displayImage(imageUrl);
-            this.displayCaption(randomCaption, folder);
-            
-        } catch (error) {
-            console.error('Error generating image:', error);
-            this.displayError(error.message);
-        }
-    }
-    
-    displayImage(imageUrl) {
-        const imgElement = document.getElementById('random-image');
-        const placeholder = document.getElementById('image-placeholder');
-        
-        imgElement.onload = () => {
-            placeholder.classList.add('hidden');
-            imgElement.classList.remove('hidden');
-        };
-        
-        imgElement.onerror = () => {
-            this.displayError(`Failed to load image: ${imageUrl}`);
-        };
-        
-        imgElement.src = `${imageUrl}?t=${Date.now()}`;
-    }
-    
-    displayCaption(caption, folder) {
-        document.getElementById('caption-text').textContent = caption;
-        document.getElementById('image-source').textContent = `Source: ${folder} folder`;
-    }
-    
-    displayError(message) {
-        document.getElementById('caption-text').textContent = `Error: ${message}`;
-        document.getElementById('image-source').textContent = 'Source: Error occurred';
-        
-        const imgElement = document.getElementById('random-image');
-        const placeholder = document.getElementById('image-placeholder');
-        
-        imgElement.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        placeholder.innerHTML = `<i class="fas fa-exclamation-triangle"></i><p>${message}</p>`;
-    }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Image Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-random"></i> Random Image Generator</h1>
+            <p class="subtitle">Discover random images with captions</p>
+        </header>
 
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    new ImageGenerator();
-});
+        <main>
+            <div class="controls">
+                <div class="folder-selector">
+                    <h2><i class="fas fa-folder"></i> Select Folder</h2>
+                    <div class="folder-buttons">
+                        <button class="folder-btn active" data-folder="Lilia">
+                            <i class="fas fa-folder-open"></i> Lilia
+                        </button>
+                        <button class="folder-btn" data-folder="Leylah">
+                            <i class="fas fa-folder-open"></i> Leylah
+                        </button>
+                        <button class="folder-btn" data-folder="random">
+                            <i class="fas fa-random"></i> Random
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <button id="generate-btn" class="generate-btn">
+                        <i class="fas fa-magic"></i> Generate Random Image
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-container">
+                <div class="image-container">
+                    <div class="image-placeholder" id="image-placeholder">
+                        <i class="fas fa-image"></i>
+                        <p>Click the button to generate an image</p>
+                    </div>
+                    <img id="random-image" class="hidden" alt="Random generated image">
+                </div>
+
+                <div class="caption-container">
+                    <h2><i class="fas fa-quote-left"></i> Caption</h2>
+                    <div class="caption-box">
+                        <p id="caption-text">Your random caption will appear here...</p>
+                    </div>
+                    <div class="image-info">
+                        <p id="image-source">Source: Not selected yet</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Images and captions are loaded dynamically from the repository</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
