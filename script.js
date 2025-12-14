@@ -2,15 +2,29 @@ class ImageGenerator {
     constructor() {
         this.currentFolder = 'Lilia';
         this.captions = [];
-        this.availableFolders = ['Lilia', 'Leylah'];
+        this.imageManifest = {};
         
         this.init();
     }
     
     async init() {
-        this.loadCaptions();
+        await this.loadManifest();
+        await this.loadCaptions();
         this.setupEventListeners();
         this.updateFolderButtons();
+    }
+    
+    async loadManifest() {
+        try {
+            const response = await fetch('images-manifest.json');
+            if (!response.ok) throw new Error('Failed to load manifest');
+            
+            this.imageManifest = await response.json();
+            console.log('Loaded manifest:', this.imageManifest);
+        } catch (error) {
+            console.error('Error loading manifest:', error);
+            this.imageManifest = { Lilia: [], Leylah: [] };
+        }
     }
     
     async loadCaptions() {
@@ -47,10 +61,15 @@ class ImageGenerator {
     
     selectFolder(folder) {
         this.currentFolder = folder === 'random' 
-            ? this.availableFolders[Math.floor(Math.random() * this.availableFolders.length)]
+            ? this.getRandomFolder()
             : folder;
         
         this.updateFolderButtons();
+    }
+    
+    getRandomFolder() {
+        const folders = Object.keys(this.imageManifest).filter(f => this.imageManifest[f].length > 0);
+        return folders[Math.floor(Math.random() * folders.length)] || 'Lilia';
     }
     
     updateFolderButtons() {
@@ -59,62 +78,18 @@ class ImageGenerator {
             if (folder === 'random') {
                 btn.classList.toggle('active', this.currentFolder === 'random');
             } else {
-                btn.classList.toggle('active', 
-                    folder === this.currentFolder || 
-                    (this.currentFolder === 'random' && folder === this.availableFolders[0]));
+                btn.classList.toggle('active', folder === this.currentFolder);
             }
         });
     }
     
-    async getImageList(folder) {
-        try {
-            // This is a workaround for GitHub Pages since we can't list files directly
-            // You'll need to create a simple JSON file or use a different approach
-            // For now, we'll try to load images with common extensions
-            return await this.tryToFindImages(folder);
-        } catch (error) {
-            console.error(`Error loading images from ${folder}:`, error);
-            return [];
-        }
-    }
-    
-    async tryToFindImages(folder) {
-        // Common image extensions
-        const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-        const images = [];
-        
-        // Try to load common image patterns
-        for (let i = 1; i <= 20; i++) {
-            for (const ext of extensions) {
-                const imageName = `image${i}${ext}`;
-                const imageUrl = `${folder}/${imageName}`;
-                
-                // Check if image exists
-                if (await this.imageExists(imageUrl)) {
-                    images.push(imageName);
-                }
-            }
-        }
-        
-        return images;
-    }
-    
-    async imageExists(url) {
-        try {
-            const response = await fetch(url, { method: 'HEAD' });
-            return response.ok;
-        } catch {
-            return false;
-        }
-    }
-    
-    async generateRandomImage() {
+    generateRandomImage() {
         try {
             const folder = this.currentFolder;
-            const images = await this.getImageList(folder);
+            const images = this.imageManifest[folder] || [];
             
             if (images.length === 0) {
-                throw new Error(`No images found in ${folder} folder`);
+                throw new Error(`No images found in ${folder} folder. Please check the manifest file.`);
             }
             
             // Select random image
@@ -146,10 +121,11 @@ class ImageGenerator {
         };
         
         imgElement.onerror = () => {
-            this.displayError('Failed to load image. Please check the image path.');
+            this.displayError(`Failed to load image: ${imageUrl}. Please check the file exists.`);
         };
         
-        imgElement.src = imageUrl;
+        // Add cache busting to prevent browser caching
+        imgElement.src = `${imageUrl}?t=${Date.now()}`;
     }
     
     displayCaption(caption, folder) {
