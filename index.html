@@ -11,56 +11,48 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-random"></i> Random Image Generator</h1>
-            <p class="subtitle">Discover random images with captions</p>
+            <p>Images from your repository folders</p>
         </header>
 
-        <main>
-            <div class="controls">
-                <div class="folder-selector">
-                    <h2><i class="fas fa-folder"></i> Select Folder</h2>
-                    <div class="folder-buttons">
-                        <button class="folder-btn active" data-folder="Lilia">
-                            <i class="fas fa-folder-open"></i> Lilia
-                        </button>
-                        <button class="folder-btn" data-folder="Leylah">
-                            <i class="fas fa-folder-open"></i> Leylah
-                        </button>
-                        <button class="folder-btn" data-folder="random">
-                            <i class="fas fa-random"></i> Random
-                        </button>
-                    </div>
-                </div>
-
-                <div class="action-section">
-                    <button id="generate-btn" class="generate-btn">
-                        <i class="fas fa-magic"></i> Generate Random Image
-                    </button>
-                </div>
+        <div class="controls">
+            <h2><i class="fas fa-folder"></i> Select Folder:</h2>
+            <div class="buttons">
+                <button class="folder-btn active" data-folder="Lilia">
+                    <i class="fas fa-folder"></i> Lilia
+                </button>
+                <button class="folder-btn" data-folder="Leylah">
+                    <i class="fas fa-folder"></i> Leylah
+                </button>
+                <button class="folder-btn" data-folder="random">
+                    <i class="fas fa-random"></i> Random
+                </button>
             </div>
+            
+            <button id="generate-btn" class="generate-btn">
+                <i class="fas fa-sync-alt"></i> Generate Random Image
+            </button>
+        </div>
 
-            <div class="result-container">
-                <div class="image-container">
-                    <div class="image-placeholder" id="image-placeholder">
-                        <i class="fas fa-image"></i>
-                        <p>Click the button to generate an image</p>
-                    </div>
-                    <img id="random-image" class="hidden" alt="Random generated image">
+        <div class="content">
+            <div class="image-section">
+                <div class="image-placeholder" id="image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <p>Click generate to see an image</p>
                 </div>
-
-                <div class="caption-container">
-                    <h2><i class="fas fa-quote-left"></i> Caption</h2>
-                    <div class="caption-box">
-                        <p id="caption-text">Your random caption will appear here...</p>
-                    </div>
-                    <div class="image-info">
-                        <p id="image-source">Source: Not selected yet</p>
-                    </div>
-                </div>
+                <img id="random-image" class="hidden" alt="Random image">
             </div>
-        </main>
+            
+            <div class="caption-section">
+                <h3><i class="fas fa-quote-left"></i> Caption:</h3>
+                <div class="caption-box">
+                    <p id="caption-text">Caption will appear here...</p>
+                </div>
+                <p id="image-source">Source: Not generated yet</p>
+            </div>
+        </div>
 
         <footer>
-            <p>Images and captions are loaded dynamically from the repository</p>
+            <p>Images loaded directly from repository folders</p>
         </footer>
     </div>
 
