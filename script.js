@@ -24,7 +24,7 @@ class ImageGenerator {
             console.log('✅ App initialized successfully!');
             console.log(`📁 Lilia: ${this.imageManifest.Lilia.length} images`);
             console.log(`📁 Leylah: ${this.imageManifest.Leylah.length} images`);
-            console.log(`📝 Captions: ${this.captions.length}`);
+            console.log(`💬 Captions: ${this.captions.length}`);
             
         } catch (error) {
             console.error('❌ Initialization failed:', error);
@@ -54,32 +54,30 @@ class ImageGenerator {
     }
     
     async loadCaptions() {
-        console.log('📝 Loading captions.txt...');
+        console.log('💬 Loading captions.json...');
         
         try {
-            const response = await fetch('captions.txt');
+            const response = await fetch('captions.json');
             
             if (response.ok) {
-                const text = await response.text();
-                this.captions = text.split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0);
+                const data = await response.json();
+                this.captions = data.captions;
+                console.log(`✅ Loaded ${this.captions.length} captions`);
             } else {
-                // Fallback captions if file not found
-                this.captions = [
-                    'A beautiful moment captured.',
-                    'Memories that will last forever.',
-                    'Pure happiness in a frame.',
-                    'A snapshot of joy.',
-                    'Time stands still here.'
-                ];
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            console.log(`✅ Loaded ${this.captions.length} captions`);
-            
         } catch (error) {
-            console.warn('⚠️ Using fallback captions:', error);
-            this.captions = ['A beautiful moment captured.'];
+            console.warn('⚠️ Error loading captions, using fallback:', error);
+            // Fallback captions if file not found
+            this.captions = [
+                'A beautiful moment captured.',
+                'Memories that will last forever.',
+                'Pure happiness in a frame.',
+                'A snapshot of joy.',
+                'Time stands still here.'
+            ];
+            console.log(`✅ Using ${this.captions.length} fallback captions`);
         }
     }
     
@@ -110,7 +108,7 @@ class ImageGenerator {
         }
         
         this.updateFolderButtons();
-        console.log(`📁 Selected: ${this.currentFolder}`);
+        console.log(`📂 Selected: ${this.currentFolder}`);
     }
     
     updateFolderButtons() {
@@ -142,6 +140,7 @@ class ImageGenerator {
         const caption = this.captions[captionIndex];
         
         console.log(`🖼️ Loading: ${imagePath}`);
+        console.log(`💬 Caption: ${caption}`);
         
         // Display everything
         this.displayImage(imagePath);
